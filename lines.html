@@ -1,0 +1,839 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lines</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --sky-1: #0c1020;
+      --sky-2: #1a2a44;
+      --sky-3: #2a3f57;
+      --mist-1: rgba(210, 230, 255, 0.8);
+      --mist-2: rgba(180, 205, 235, 0.65);
+      --mist-3: rgba(140, 170, 205, 0.5);
+      --accent: #d8f1ff;
+      --ink: #f4f7ff;
+      --panel: rgba(10, 18, 32, 0.6);
+      --panel-border: rgba(200, 220, 250, 0.18);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Work Sans", system-ui, sans-serif;
+      min-height: 100vh;
+      color: var(--ink);
+      background: var(--sky-1);
+      overflow: hidden;
+    }
+
+    #lines {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      display: block;
+    }
+
+    .ui {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      justify-content: flex-end;
+      padding: 5vh 6vw;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 18px;
+      padding: 18px 18px 16px;
+      backdrop-filter: blur(12px);
+      display: grid;
+      gap: 14px;
+      box-shadow: 0 20px 40px rgba(5, 10, 20, 0.35);
+    }
+
+    .panel h2 {
+      font-size: 1rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      font-weight: 500;
+      color: rgba(240, 248, 255, 0.9);
+    }
+
+    .control {
+      display: grid;
+      gap: 8px;
+    }
+
+    .control label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      letter-spacing: 0.05em;
+      color: rgba(230, 240, 255, 0.7);
+      text-transform: uppercase;
+    }
+
+    .control input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+
+    .control input[type="number"] {
+      width: 100%;
+      border: 1px solid rgba(220, 235, 255, 0.2);
+      background: rgba(15, 25, 40, 0.7);
+      color: var(--ink);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 0.9rem;
+    }
+
+    .control input[type="color"] {
+      width: 100%;
+      height: 38px;
+      border: 1px solid rgba(220, 235, 255, 0.2);
+      border-radius: 10px;
+      background: rgba(15, 25, 40, 0.7);
+      padding: 4px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    button {
+      border: 1px solid rgba(220, 235, 255, 0.2);
+      background: rgba(15, 25, 40, 0.7);
+      color: var(--ink);
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-size: 0.85rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      background: rgba(20, 35, 55, 0.8);
+    }
+
+    .hint {
+      font-size: 0.8rem;
+      letter-spacing: 0.05em;
+      color: rgba(220, 235, 255, 0.55);
+    }
+
+    @media (max-width: 900px) {
+      .ui {
+        justify-content: flex-start;
+      }
+
+      .panel {
+        max-width: 360px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="lines"></canvas>
+  <div class="ui">
+    <div class="panel">
+      <h2>Controls</h2>
+      <div class="control">
+        <label for="backgroundTop">Background Top <span data-value="backgroundTop"></span></label>
+        <input id="backgroundTop" type="color" value="#151515" />
+      </div>
+      <div class="control">
+        <label for="backgroundBottom">Background Bottom <span data-value="backgroundBottom"></span></label>
+        <input id="backgroundBottom" type="color" value="#050505" />
+      </div>
+      <div class="control">
+        <label for="backgroundLeft">Background Left <span data-value="backgroundLeft"></span></label>
+        <input id="backgroundLeft" type="color" value="#101010" />
+      </div>
+      <div class="control">
+        <label for="backgroundRight">Background Right <span data-value="backgroundRight"></span></label>
+        <input id="backgroundRight" type="color" value="#0b0b0b" />
+      </div>
+      <div class="control">
+        <label for="backgroundEnabled">Background <span data-value="backgroundEnabled"></span></label>
+        <input id="backgroundEnabled" type="checkbox" checked />
+      </div>
+      <div class="control">
+        <label for="lineColorA">Line Color A <span data-value="lineColorA"></span></label>
+        <input id="lineColorA" type="color" value="#f07a1f" />
+      </div>
+      <div class="control">
+        <label for="lineColorB">Line Color B <span data-value="lineColorB"></span></label>
+        <input id="lineColorB" type="color" value="#f6c36a" />
+      </div>
+      <div class="row">
+        <div class="control">
+          <label for="exportWidth">Export W <span data-value="exportWidth"></span></label>
+          <input id="exportWidth" type="number" min="320" max="7680" value="2560" />
+        </div>
+        <div class="control">
+          <label for="exportHeight">Export H <span data-value="exportHeight"></span></label>
+          <input id="exportHeight" type="number" min="320" max="4320" value="1440" />
+        </div>
+      </div>
+      <div class="control">
+        <label for="density">Line Count <span data-value="density"></span></label>
+        <input id="density" type="range" min="1" max="200" value="120" />
+      </div>
+      <div class="control">
+        <label for="layers">Layers <span data-value="layers"></span></label>
+        <input id="layers" type="range" min="1" max="10" value="5" />
+      </div>
+      <div class="control">
+        <label for="length">Wavelength <span data-value="length"></span></label>
+        <input id="length" type="range" min="1" max="500" value="320" />
+      </div>
+      <div class="control">
+        <label for="blur">Blur <span data-value="blur"></span></label>
+        <input id="blur" type="range" min="1" max="100" value="18" />
+      </div>
+      <div class="control">
+        <label for="thickness">Thickness <span data-value="thickness"></span></label>
+        <input id="thickness" type="range" min="1" max="100" value="4" />
+      </div>
+      <div class="control">
+        <label for="scaleX">Scale X <span data-value="scaleX"></span></label>
+        <input id="scaleX" type="range" min="1" max="150" value="100" />
+      </div>
+      <div class="control">
+        <label for="scaleY">Scale Y <span data-value="scaleY"></span></label>
+        <input id="scaleY" type="range" min="1" max="150" value="100" />
+      </div>
+      <div class="row">
+        <button id="randomize" type="button">New Seed</button>
+        <button id="download" type="button">Download PNG</button>
+      </div>
+      <div class="hint">Der Download nutzt die Export-Groesse.</div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("lines");
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    const inputs = {
+      backgroundTop: document.getElementById("backgroundTop"),
+      backgroundBottom: document.getElementById("backgroundBottom"),
+      backgroundLeft: document.getElementById("backgroundLeft"),
+      backgroundRight: document.getElementById("backgroundRight"),
+      backgroundEnabled: document.getElementById("backgroundEnabled"),
+      lineColorA: document.getElementById("lineColorA"),
+      lineColorB: document.getElementById("lineColorB"),
+      exportWidth: document.getElementById("exportWidth"),
+      exportHeight: document.getElementById("exportHeight"),
+      density: document.getElementById("density"),
+      layers: document.getElementById("layers"),
+      length: document.getElementById("length"),
+      blur: document.getElementById("blur"),
+      thickness: document.getElementById("thickness"),
+      scaleX: document.getElementById("scaleX"),
+      scaleY: document.getElementById("scaleY"),
+    };
+
+    const valueLabels = document.querySelectorAll("[data-value]");
+
+    let rngSeed = Math.floor(Math.random() * 1e9);
+    let lastSeed = rngSeed;
+
+    const params = {
+      backgroundTop: inputs.backgroundTop.value,
+      backgroundBottom: inputs.backgroundBottom.value,
+      backgroundLeft: inputs.backgroundLeft.value,
+      backgroundRight: inputs.backgroundRight.value,
+      backgroundEnabled: inputs.backgroundEnabled.checked,
+      lineColorA: inputs.lineColorA.value,
+      lineColorB: inputs.lineColorB.value,
+      exportWidth: Number(inputs.exportWidth.value),
+      exportHeight: Number(inputs.exportHeight.value),
+      density: Number(inputs.density.value),
+      layers: Number(inputs.layers.value),
+      length: Number(inputs.length.value),
+      blur: Number(inputs.blur.value),
+      thickness: Number(inputs.thickness.value),
+      scaleX: Number(inputs.scaleX.value),
+      scaleY: Number(inputs.scaleY.value),
+    };
+
+    const TWO_PI = Math.PI * 2;
+
+    function hexToRgb(hex) {
+      const clean = hex.replace("#", "");
+      if (clean.length !== 6) {
+        return { r: 210, g: 230, b: 255 };
+      }
+      const r = parseInt(clean.slice(0, 2), 16);
+      const g = parseInt(clean.slice(2, 4), 16);
+      const b = parseInt(clean.slice(4, 6), 16);
+      return { r, g, b };
+    }
+
+    function colorToVec3(color) {
+      return [color.r / 255, color.g / 255, color.b / 255];
+    }
+
+    function mixColor(a, b, t) {
+      return {
+        r: Math.round(a.r + (b.r - a.r) * t),
+        g: Math.round(a.g + (b.g - a.g) * t),
+        b: Math.round(a.b + (b.b - a.b) * t),
+      };
+    }
+
+    function resize() {
+      canvas.width = Math.floor(window.innerWidth * dpr);
+      canvas.height = Math.floor(window.innerHeight * dpr);
+      canvas.style.width = `${window.innerWidth}px`;
+      canvas.style.height = `${window.innerHeight}px`;
+      if (renderer) {
+        renderer.gl.viewport(0, 0, canvas.width, canvas.height);
+      }
+    }
+
+    // Deterministic RNG so preview and export can match exactly.
+    function seededRandom() {
+      rngSeed = (rngSeed * 1664525 + 1013904223) % 4294967296;
+      return rngSeed / 4294967296;
+    }
+
+    function rand(min, max) {
+      return min + seededRandom() * (max - min);
+    }
+
+    function createShader(gl, type, source) {
+      const shader = gl.createShader(type);
+      gl.shaderSource(shader, source);
+      gl.compileShader(shader);
+      if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        console.error(gl.getShaderInfoLog(shader));
+        gl.deleteShader(shader);
+        return null;
+      }
+      return shader;
+    }
+
+    function createProgram(gl, vertexSource, fragmentSource) {
+      const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexSource);
+      const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentSource);
+      if (!vertexShader || !fragmentShader) {
+        return null;
+      }
+      const program = gl.createProgram();
+      gl.attachShader(program, vertexShader);
+      gl.attachShader(program, fragmentShader);
+      gl.linkProgram(program);
+      if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        console.error(gl.getProgramInfoLog(program));
+        gl.deleteProgram(program);
+        return null;
+      }
+      return program;
+    }
+
+    // WebGL2 renderer: background gradient + additive line ribbons.
+    function createRenderer(targetCanvas) {
+      const gl = targetCanvas.getContext("webgl2", { antialias: true, premultipliedAlpha: false });
+      if (!gl) {
+        return null;
+      }
+
+      // Fullscreen triangle for background pass.
+      const bgVertex = `#version 300 es
+        in vec2 a_position;
+        out vec2 v_uv;
+        void main() {
+          v_uv = a_position * 0.5 + 0.5;
+          gl_Position = vec4(a_position, 0.0, 1.0);
+        }
+      `;
+      // Background gradient with limited left/right influence.
+      const bgFragment = `#version 300 es
+        precision highp float;
+        in vec2 v_uv;
+        uniform vec3 u_top;
+        uniform vec3 u_bottom;
+        uniform vec3 u_left;
+        uniform vec3 u_right;
+        out vec4 outColor;
+        void main() {
+          vec3 vertical = mix(u_top, u_bottom, 1.0 - v_uv.y);
+          float leftWeight = smoothstep(0.35, 0.0, v_uv.x);
+          float rightWeight = smoothstep(0.65, 1.0, v_uv.x);
+          vec3 color = vertical;
+          color = mix(color, u_left, leftWeight);
+          color = mix(color, u_right, rightWeight);
+          outColor = vec4(color, 1.0);
+        }
+      `;
+      // Line vertex shader expects pixel-space coordinates.
+      const lineVertex = `#version 300 es
+        in vec2 a_position;
+        uniform vec2 u_resolution;
+        out vec2 v_pos;
+        void main() {
+          vec2 zeroToOne = a_position / u_resolution;
+          vec2 clip = zeroToOne * 2.0 - 1.0;
+          gl_Position = vec4(clip.x, -clip.y, 0.0, 1.0);
+          v_pos = a_position;
+        }
+      `;
+      // Radial gradient per-fragment for line glow.
+      const lineFragment = `#version 300 es
+        precision highp float;
+        in vec2 v_pos;
+        uniform vec2 u_center;
+        uniform float u_minRad;
+        uniform float u_maxRad;
+        uniform vec3 u_colorStart;
+        uniform vec3 u_colorEnd;
+        uniform float u_opacity;
+        out vec4 outColor;
+        void main() {
+          float dist = distance(v_pos, u_center);
+          float t = clamp((dist - u_minRad) / max(0.0001, u_maxRad - u_minRad), 0.0, 1.0);
+          vec3 color = mix(u_colorEnd, u_colorStart, 1.0 - t);
+          outColor = vec4(color, u_opacity);
+        }
+      `;
+
+      const bgProgram = createProgram(gl, bgVertex, bgFragment);
+      const lineProgram = createProgram(gl, lineVertex, lineFragment);
+      if (!bgProgram || !lineProgram) {
+        return null;
+      }
+
+      const bgVao = gl.createVertexArray();
+      const bgBuffer = gl.createBuffer();
+      gl.bindVertexArray(bgVao);
+      gl.bindBuffer(gl.ARRAY_BUFFER, bgBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+      const bgPosition = gl.getAttribLocation(bgProgram, "a_position");
+      gl.enableVertexAttribArray(bgPosition);
+      gl.vertexAttribPointer(bgPosition, 2, gl.FLOAT, false, 0, 0);
+
+      const lineVao = gl.createVertexArray();
+      const lineBuffer = gl.createBuffer();
+      gl.bindVertexArray(lineVao);
+      gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer);
+      const linePosition = gl.getAttribLocation(lineProgram, "a_position");
+      gl.enableVertexAttribArray(linePosition);
+      gl.vertexAttribPointer(linePosition, 2, gl.FLOAT, false, 0, 0);
+
+      gl.bindVertexArray(null);
+
+      return {
+        gl,
+        bgProgram,
+        bgVao,
+        lineProgram,
+        lineVao,
+        lineBuffer,
+        uniforms: {
+          bg: {
+            top: gl.getUniformLocation(bgProgram, "u_top"),
+            bottom: gl.getUniformLocation(bgProgram, "u_bottom"),
+            left: gl.getUniformLocation(bgProgram, "u_left"),
+            right: gl.getUniformLocation(bgProgram, "u_right"),
+          },
+          line: {
+            resolution: gl.getUniformLocation(lineProgram, "u_resolution"),
+            center: gl.getUniformLocation(lineProgram, "u_center"),
+            minRad: gl.getUniformLocation(lineProgram, "u_minRad"),
+            maxRad: gl.getUniformLocation(lineProgram, "u_maxRad"),
+            colorStart: gl.getUniformLocation(lineProgram, "u_colorStart"),
+            colorEnd: gl.getUniformLocation(lineProgram, "u_colorEnd"),
+            opacity: gl.getUniformLocation(lineProgram, "u_opacity"),
+          },
+        },
+      };
+    }
+
+    // Map UI controls to waterpipe-style parameters.
+    function buildSettings(width, height, quality) {
+      const qualityScale = quality === "preview" ? 0.65 : 1;
+      const scaleX = params.scaleX / 100;
+      const scaleY = params.scaleY / 100;
+      const baseRadius = Math.min(width, height) * 0.4;
+      const sizeScale = Math.max(0.35, params.length / 320);
+      const maxMaxRad = baseRadius * sizeScale;
+      const minMaxRad = maxMaxRad * 0.85;
+      const numCircles = Math.max(1, Math.round((params.density / 16) * qualityScale));
+      const iterations = Math.min(10, 4 + params.layers);
+      const lineWidth = Math.max(0.5, params.thickness * 0.1) * Math.max(scaleX, scaleY);
+      const smokeOpacity = 0.02 + (params.blur / 100) * 0.35;
+      const drawsPerFrame = Math.max(2, Math.round((6 + params.layers * 1.5) * qualityScale));
+
+      return {
+        smokeOpacity,
+        numCircles,
+        maxMaxRad,
+        minMaxRad,
+        minRadFactor: 0,
+        iterations,
+        drawsPerFrame,
+        lineWidth,
+        speed: 1,
+        qualityScale,
+        scaleX,
+        scaleY,
+      };
+    }
+
+    // Fractal subdivision to build the wavy radius curve.
+    function setLinePoints(iterations) {
+      let points = [{ x: 0, y: 1 }, { x: 1, y: 1 }];
+      let minY = 1;
+      let maxY = 1;
+
+      for (let i = 0; i < iterations; i += 1) {
+        const nextPoints = [points[0]];
+        for (let j = 0; j < points.length - 1; j += 1) {
+          const point = points[j];
+          const nextPoint = points[j + 1];
+          const dx = nextPoint.x - point.x;
+          const newX = 0.5 * (point.x + nextPoint.x);
+          let newY = 0.5 * (point.y + nextPoint.y);
+          newY += dx * rand(-1, 1);
+          minY = Math.min(minY, newY);
+          maxY = Math.max(maxY, newY);
+          nextPoints.push({ x: newX, y: newY }, nextPoint);
+        }
+        points = nextPoints;
+      }
+
+      if (maxY !== minY) {
+        const normalizeRate = 1 / (maxY - minY);
+        points = points.map((point) => ({
+          x: point.x,
+          y: normalizeRate * (point.y - minY),
+        }));
+      } else {
+        points = points.map((point) => ({ x: point.x, y: 1 }));
+      }
+
+      return points;
+    }
+
+    // Initialize circles with independent gradients and phases.
+    function setCircles(width, height, settings) {
+      const circles = [];
+      const baseA = hexToRgb(params.lineColorA);
+      const baseB = hexToRgb(params.lineColorB);
+
+      for (let i = 0; i < settings.numCircles; i += 1) {
+        const maxR = settings.minMaxRad + rand(0, 1) * (settings.maxMaxRad - settings.minMaxRad);
+        const minR = settings.minRadFactor * maxR;
+        const colorMix = rand(0, 1);
+        const mixed = mixColor(baseA, baseB, colorMix);
+        const start = mixColor(mixed, { r: 255, g: 200, b: 150 }, 0.35);
+        const end = mixColor(mixed, { r: 40, g: 15, b: 5 }, 0.45);
+
+        circles.push({
+          centerX: -maxR,
+          centerY: height / 2 - 50,
+          maxRad: maxR,
+          minRad: minR,
+          colorStart: colorToVec3(start),
+          colorEnd: colorToVec3(end),
+          param: 0,
+          changeSpeed: 1 / 250,
+          phase: rand(0, Math.PI * 2),
+          globalPhase: rand(0, Math.PI * 2),
+          pointList1: setLinePoints(settings.iterations),
+          pointList2: setLinePoints(settings.iterations),
+        });
+      }
+      return circles;
+    }
+
+    // Generate the polyline for a single circle step.
+    function buildCurvePoints(circle, cosParam, xSqueeze, centerX, centerY, scaleX, scaleY) {
+      const points = [];
+      const pointList1 = circle.pointList1;
+      const pointList2 = circle.pointList2;
+      circle.phase += 0.0002;
+
+      for (let i = 0; i < pointList1.length; i += 1) {
+        const point1 = pointList1[i];
+        const point2 = pointList2[i];
+        const theta = TWO_PI * (point1.x + cosParam * (point2.x - point1.x)) + circle.phase;
+        const rad =
+          circle.minRad + (point1.y + cosParam * (point2.y - point1.y)) * (circle.maxRad - circle.minRad);
+        const x = centerX + xSqueeze * rad * scaleX * Math.cos(theta);
+        const y = centerY + rad * scaleY * Math.sin(theta);
+        points.push({ x, y });
+      }
+
+      return points;
+    }
+
+    // Expand a polyline into triangle quads for GPU draw.
+    function buildQuadVertices(points, thickness) {
+      const half = thickness / 2;
+      const vertices = [];
+      for (let i = 0; i < points.length - 1; i += 1) {
+        const p0 = points[i];
+        const p1 = points[i + 1];
+        const dx = p1.x - p0.x;
+        const dy = p1.y - p0.y;
+        const len = Math.hypot(dx, dy);
+        if (len === 0) {
+          continue;
+        }
+        const nx = (-dy / len) * half;
+        const ny = (dx / len) * half;
+        const v0x = p0.x + nx;
+        const v0y = p0.y + ny;
+        const v1x = p0.x - nx;
+        const v1y = p0.y - ny;
+        const v2x = p1.x + nx;
+        const v2y = p1.y + ny;
+        const v3x = p1.x - nx;
+        const v3y = p1.y - ny;
+        vertices.push(v0x, v0y, v1x, v1y, v2x, v2y);
+        vertices.push(v2x, v2y, v1x, v1y, v3x, v3y);
+      }
+      return new Float32Array(vertices);
+    }
+
+    // Render a full frame into the WebGL canvas.
+    function renderScene(rendererInstance, width, height, quality = "preview") {
+      const gl = rendererInstance.gl;
+      const settings = buildSettings(width, height, quality);
+      gl.viewport(0, 0, width, height);
+      gl.disable(gl.DITHER);
+      if (params.backgroundEnabled) {
+        gl.clearColor(0, 0, 0, 1);
+      } else {
+        gl.clearColor(0, 0, 0, 0);
+      }
+      gl.clear(gl.COLOR_BUFFER_BIT);
+
+      if (params.backgroundEnabled) {
+        gl.disable(gl.BLEND);
+        gl.useProgram(rendererInstance.bgProgram);
+        gl.bindVertexArray(rendererInstance.bgVao);
+        const top = colorToVec3(hexToRgb(params.backgroundTop));
+        const bottom = colorToVec3(hexToRgb(params.backgroundBottom));
+        const left = colorToVec3(hexToRgb(params.backgroundLeft));
+        const right = colorToVec3(hexToRgb(params.backgroundRight));
+        gl.uniform3fv(rendererInstance.uniforms.bg.top, top);
+        gl.uniform3fv(rendererInstance.uniforms.bg.bottom, bottom);
+        gl.uniform3fv(rendererInstance.uniforms.bg.left, left);
+        gl.uniform3fv(rendererInstance.uniforms.bg.right, right);
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+      }
+
+      // Additive blending builds the luminous ribbon look.
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+      gl.useProgram(rendererInstance.lineProgram);
+      gl.bindVertexArray(rendererInstance.lineVao);
+      gl.uniform2f(rendererInstance.uniforms.line.resolution, width, height);
+
+      const circles = setCircles(width, height, settings);
+      let drawCount = 0;
+      const maxFrames = Math.ceil(
+        (width + settings.maxMaxRad * 1.6) / (1.4 * settings.speed) * settings.qualityScale
+      );
+      const xSqueeze = 0.75;
+      const centerX0 = width / 2;
+      const centerY0 = height / 2;
+
+      for (let frame = 0; frame < maxFrames; frame += 1) {
+        let active = 0;
+        for (let j = 0; j < settings.drawsPerFrame; j += 1) {
+          drawCount += 1;
+          for (let i = 0; i < circles.length; i += 1) {
+            const circle = circles[i];
+            circle.param += circle.changeSpeed;
+            if (circle.param >= 1) {
+              circle.param = 0;
+              circle.pointList1 = circle.pointList2;
+              circle.pointList2 = setLinePoints(settings.iterations);
+            }
+            const cosParam = 0.5 - 0.5 * Math.cos(Math.PI * circle.param);
+            circle.centerX += 0.9 * settings.speed;
+            circle.centerY += 0.05 * settings.speed;
+            const yOffset = 40 * Math.sin(circle.globalPhase + (drawCount / 1000) * TWO_PI);
+            const scaledCenterX = centerX0 + (circle.centerX - centerX0) * settings.scaleX;
+            const scaledCenterY =
+              centerY0 + (circle.centerY - centerY0) * settings.scaleY + yOffset * settings.scaleY;
+            if (scaledCenterX <= width + settings.maxMaxRad * settings.scaleX) {
+              active += 1;
+            }
+
+            const points = buildCurvePoints(
+              circle,
+              cosParam,
+              xSqueeze,
+              scaledCenterX,
+              scaledCenterY,
+              settings.scaleX,
+              settings.scaleY
+            );
+            const vertices = buildQuadVertices(points, settings.lineWidth);
+            if (!vertices.length) {
+              continue;
+            }
+
+            gl.bindBuffer(gl.ARRAY_BUFFER, rendererInstance.lineBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.DYNAMIC_DRAW);
+            gl.uniform2f(rendererInstance.uniforms.line.center, scaledCenterX, scaledCenterY);
+            gl.uniform1f(rendererInstance.uniforms.line.minRad, circle.minRad);
+            gl.uniform1f(rendererInstance.uniforms.line.maxRad, circle.maxRad);
+            gl.uniform3fv(rendererInstance.uniforms.line.colorStart, circle.colorStart);
+            gl.uniform3fv(rendererInstance.uniforms.line.colorEnd, circle.colorEnd);
+            gl.uniform1f(rendererInstance.uniforms.line.opacity, settings.smokeOpacity);
+            gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 2);
+          }
+        }
+        if (active === 0) {
+          break;
+        }
+      }
+
+      gl.bindVertexArray(null);
+      if (params.backgroundEnabled) {
+        document.body.style.setProperty("--sky-1", params.backgroundTop);
+        document.body.style.background = "";
+      } else {
+        document.body.style.background = "transparent";
+      }
+    }
+
+
+    // Keep the UI value badges in sync.
+    function updateLabels() {
+      valueLabels.forEach((label) => {
+        const key = label.dataset.value;
+        if (
+          key === "backgroundTop" ||
+          key === "backgroundBottom" ||
+          key === "backgroundLeft" ||
+          key === "backgroundRight" ||
+          key === "lineColorA" ||
+          key === "lineColorB"
+        ) {
+          label.textContent = params[key].toUpperCase();
+          return;
+        }
+        if (key === "backgroundEnabled") {
+          label.textContent = params.backgroundEnabled ? "ON" : "OFF";
+          return;
+        }
+        if (key === "thickness") {
+          label.textContent = `${params[key]}px`;
+          return;
+        }
+        if (key === "scaleX" || key === "scaleY") {
+          label.textContent = `${params[key]}%`;
+          return;
+        }
+        if (key === "exportWidth" || key === "exportHeight") {
+          label.textContent = params[key];
+          return;
+        }
+        label.textContent = params[key];
+      });
+    }
+
+    // Pull current UI values into params without re-rendering.
+    function syncParams() {
+      params.backgroundTop = inputs.backgroundTop.value;
+      params.backgroundBottom = inputs.backgroundBottom.value;
+      params.backgroundLeft = inputs.backgroundLeft.value;
+      params.backgroundRight = inputs.backgroundRight.value;
+      params.backgroundEnabled = inputs.backgroundEnabled.checked;
+      params.lineColorA = inputs.lineColorA.value;
+      params.lineColorB = inputs.lineColorB.value;
+      params.exportWidth = Number(inputs.exportWidth.value);
+      params.exportHeight = Number(inputs.exportHeight.value);
+      params.density = Number(inputs.density.value);
+      params.layers = Number(inputs.layers.value);
+      params.length = Number(inputs.length.value);
+      params.blur = Number(inputs.blur.value);
+      params.thickness = Number(inputs.thickness.value);
+      params.scaleX = Number(inputs.scaleX.value);
+      params.scaleY = Number(inputs.scaleY.value);
+      updateLabels();
+    }
+
+    // Re-render only on explicit actions.
+    function applySettings({ reseed = false } = {}) {
+      if (reseed) {
+        rngSeed = Math.floor(Math.random() * 1e9);
+        lastSeed = rngSeed;
+      }
+      syncParams();
+      renderScene(renderer, canvas.width, canvas.height, "preview");
+    }
+
+    Object.values(inputs).forEach((input) => {
+      input.addEventListener("input", () => syncParams());
+    });
+
+    document.getElementById("randomize").addEventListener("click", () => {
+      applySettings({ reseed: true });
+    });
+
+    document.getElementById("download").addEventListener("click", () => {
+      syncParams();
+      const seed = lastSeed;
+      rngSeed = seed;
+      const exportCanvas = document.createElement("canvas");
+      exportCanvas.width = Math.max(320, params.exportWidth);
+      exportCanvas.height = Math.max(320, params.exportHeight);
+      const exportRenderer = createRenderer(exportCanvas);
+      if (!exportRenderer) {
+        return;
+      }
+      renderScene(exportRenderer, exportCanvas.width, exportCanvas.height, "preview");
+      rngSeed = seed;
+      exportCanvas.toBlob((blob) => {
+        if (!blob) {
+          return;
+        }
+        const link = document.createElement("a");
+        link.download = "lines.png";
+        link.href = URL.createObjectURL(blob);
+        link.click();
+        URL.revokeObjectURL(link.href);
+      }, "image/png");
+    });
+
+    window.addEventListener("resize", () => {
+      resize();
+      applySettings();
+    });
+
+    const renderer = createRenderer(canvas);
+    if (!renderer) {
+      console.error("WebGL2 not supported.");
+    } else {
+      resize();
+      applySettings();
+    }
+  </script>
+</body>
+</html>

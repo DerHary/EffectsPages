@@ -1,0 +1,515 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Clouds</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --sky-1: #0c1020;
+      --sky-2: #1a2a44;
+      --sky-3: #2a3f57;
+      --mist-1: rgba(210, 230, 255, 0.8);
+      --mist-2: rgba(180, 205, 235, 0.65);
+      --mist-3: rgba(140, 170, 205, 0.5);
+      --accent: #d8f1ff;
+      --ink: #f4f7ff;
+      --panel: rgba(10, 18, 32, 0.6);
+      --panel-border: rgba(200, 220, 250, 0.18);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Work Sans", system-ui, sans-serif;
+      min-height: 100vh;
+      color: var(--ink);
+      background: var(--sky-1);
+      overflow: hidden;
+    }
+
+    #clouds {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      display: block;
+    }
+
+    .ui {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      justify-content: flex-end;
+      padding: 5vh 6vw;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 18px;
+      padding: 18px 18px 16px;
+      backdrop-filter: blur(12px);
+      display: grid;
+      gap: 14px;
+      box-shadow: 0 20px 40px rgba(5, 10, 20, 0.35);
+    }
+
+    .panel h2 {
+      font-size: 1rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      font-weight: 500;
+      color: rgba(240, 248, 255, 0.9);
+    }
+
+    .control {
+      display: grid;
+      gap: 8px;
+    }
+
+    .control label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      letter-spacing: 0.05em;
+      color: rgba(230, 240, 255, 0.7);
+      text-transform: uppercase;
+    }
+
+    .control input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+
+    .control input[type="number"] {
+      width: 100%;
+      border: 1px solid rgba(220, 235, 255, 0.2);
+      background: rgba(15, 25, 40, 0.7);
+      color: var(--ink);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 0.9rem;
+    }
+
+    .control input[type="color"] {
+      width: 100%;
+      height: 38px;
+      border: 1px solid rgba(220, 235, 255, 0.2);
+      border-radius: 10px;
+      background: rgba(15, 25, 40, 0.7);
+      padding: 4px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    button {
+      border: 1px solid rgba(220, 235, 255, 0.2);
+      background: rgba(15, 25, 40, 0.7);
+      color: var(--ink);
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-size: 0.85rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      background: rgba(20, 35, 55, 0.8);
+    }
+
+    .hint {
+      font-size: 0.8rem;
+      letter-spacing: 0.05em;
+      color: rgba(220, 235, 255, 0.55);
+    }
+
+    @media (max-width: 900px) {
+      .ui {
+        justify-content: flex-start;
+      }
+
+      .panel {
+        max-width: 360px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="clouds"></canvas>
+  <div class="ui">
+    <div class="panel">
+      <h2>Controls</h2>
+      <div class="control">
+        <label for="background">Background <span data-value="background"></span></label>
+        <input id="background" type="color" value="#0c1020" />
+      </div>
+      <div class="control">
+        <label for="cloudColor">Cloud Color <span data-value="cloudColor"></span></label>
+        <input id="cloudColor" type="color" value="#d2e6ff" />
+      </div>
+      <div class="row">
+        <div class="control">
+          <label for="exportWidth">Export W <span data-value="exportWidth"></span></label>
+          <input id="exportWidth" type="number" min="320" max="7680" value="2560" />
+        </div>
+        <div class="control">
+          <label for="exportHeight">Export H <span data-value="exportHeight"></span></label>
+          <input id="exportHeight" type="number" min="320" max="4320" value="1440" />
+        </div>
+      </div>
+      <div class="control">
+        <label for="density">Density <span data-value="density"></span></label>
+        <input id="density" type="range" min="20" max="160" value="90" />
+      </div>
+      <div class="control">
+        <label for="layers">Layers <span data-value="layers"></span></label>
+        <input id="layers" type="range" min="1" max="5" value="3" />
+      </div>
+      <div class="control">
+        <label for="size">Puff Size <span data-value="size"></span></label>
+        <input id="size" type="range" min="40" max="220" value="140" />
+      </div>
+      <div class="control">
+        <label for="blur">Blur <span data-value="blur"></span></label>
+        <input id="blur" type="range" min="0" max="60" value="28" />
+      </div>
+      <div class="control">
+        <label for="light">Light <span data-value="light"></span></label>
+        <input id="light" type="range" min="0" max="100" value="35" />
+      </div>
+      <div class="row">
+        <button id="randomize" type="button">New Seed</button>
+        <button id="download" type="button">Download PNG</button>
+      </div>
+      <div class="hint">Der Download nutzt die Export-Groesse.</div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("clouds");
+    const ctx = canvas.getContext("2d");
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    const inputs = {
+      background: document.getElementById("background"),
+      cloudColor: document.getElementById("cloudColor"),
+      exportWidth: document.getElementById("exportWidth"),
+      exportHeight: document.getElementById("exportHeight"),
+      density: document.getElementById("density"),
+      layers: document.getElementById("layers"),
+      size: document.getElementById("size"),
+      blur: document.getElementById("blur"),
+      light: document.getElementById("light"),
+    };
+
+    const valueLabels = document.querySelectorAll("[data-value]");
+
+    let noiseSeed = Math.random() * 1000;
+    let layers = [];
+
+    const params = {
+      background: inputs.background.value,
+      cloudColor: inputs.cloudColor.value,
+      exportWidth: Number(inputs.exportWidth.value),
+      exportHeight: Number(inputs.exportHeight.value),
+      density: Number(inputs.density.value),
+      layers: Number(inputs.layers.value),
+      size: Number(inputs.size.value),
+      blur: Number(inputs.blur.value),
+      light: Number(inputs.light.value),
+    };
+
+    function hexToRgb(hex) {
+      const clean = hex.replace("#", "");
+      if (clean.length !== 6) {
+        return { r: 210, g: 230, b: 255 };
+      }
+      const r = parseInt(clean.slice(0, 2), 16);
+      const g = parseInt(clean.slice(2, 4), 16);
+      const b = parseInt(clean.slice(4, 6), 16);
+      return { r, g, b };
+    }
+
+    function rgbaFromHex(hex, alpha) {
+      const { r, g, b } = hexToRgb(hex);
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+
+    function mixColor(a, b, t) {
+      return {
+        r: Math.round(a.r + (b.r - a.r) * t),
+        g: Math.round(a.g + (b.g - a.g) * t),
+        b: Math.round(a.b + (b.b - a.b) * t),
+      };
+    }
+
+    function colorToRgba(color, alpha = 1) {
+      return `rgba(${color.r}, ${color.g}, ${color.b}, ${alpha})`;
+    }
+
+    function resize() {
+      canvas.width = Math.floor(window.innerWidth * dpr);
+      canvas.height = Math.floor(window.innerHeight * dpr);
+      canvas.style.width = `${window.innerWidth}px`;
+      canvas.style.height = `${window.innerHeight}px`;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function rand(min, max) {
+      return min + Math.random() * (max - min);
+    }
+
+    function valueNoise(x, y) {
+      const ix = Math.floor(x);
+      const iy = Math.floor(y);
+      const fx = x - ix;
+      const fy = y - iy;
+
+      function hash(nx, ny) {
+        const s = Math.sin(nx * 12.9898 + ny * 78.233 + noiseSeed) * 43758.5453;
+        return s - Math.floor(s);
+      }
+
+      const a = hash(ix, iy);
+      const b = hash(ix + 1, iy);
+      const c = hash(ix, iy + 1);
+      const d = hash(ix + 1, iy + 1);
+
+      const ux = fx * fx * (3 - 2 * fx);
+      const uy = fy * fy * (3 - 2 * fy);
+
+      return (
+        a * (1 - ux) * (1 - uy) +
+        b * ux * (1 - uy) +
+        c * (1 - ux) * uy +
+        d * ux * uy
+      );
+    }
+
+    function drawBackdrop(targetCtx, width, height) {
+      const base = hexToRgb(params.background);
+      const top = mixColor(base, { r: 255, g: 255, b: 255 }, 0.25);
+      const bottom = mixColor(base, { r: 10, g: 14, b: 25 }, 0.4);
+      const gradient = targetCtx.createLinearGradient(0, 0, 0, height);
+      gradient.addColorStop(0, colorToRgba(top, 1));
+      gradient.addColorStop(0.55, colorToRgba(base, 1));
+      gradient.addColorStop(1, colorToRgba(bottom, 1));
+      targetCtx.fillStyle = gradient;
+      targetCtx.fillRect(0, 0, width, height);
+      document.body.style.setProperty("--sky-1", params.background);
+    }
+
+    function initLayers(width, height) {
+      layers = [];
+      const baseColor = hexToRgb(params.cloudColor);
+
+      for (let i = 0; i < params.layers; i += 1) {
+        const clouds = [];
+        const depth = 0.65 + i * 0.3;
+        const bandY = height * (0.15 + i * 0.18 + rand(-0.08, 0.08));
+        const bandHeight = height * (0.6 + i * 0.12);
+        const cloudCount = Math.round(params.density * (0.55 + i * 0.15));
+
+        for (let j = 0; j < cloudCount; j += 1) {
+          const size = params.size * (0.55 + Math.random() * 0.85) * (1 + i * 0.2);
+          const cloudWidth = size * rand(1.6, 2.8);
+          const puffCount = Math.round(rand(6, 13));
+          const puffs = [];
+
+          for (let k = 0; k < puffCount; k += 1) {
+            const t = puffCount === 1 ? 0.5 : k / (puffCount - 1);
+            const radius = size * rand(0.32, 0.65) * (1 - Math.abs(t - 0.5) * 0.35);
+            puffs.push({
+              dx: (t - 0.5) * cloudWidth + rand(-0.2, 0.2) * size,
+              dy: rand(-0.25, 0.25) * size,
+              radius,
+            });
+          }
+
+          clouds.push({
+            x: rand(-0.2 * width, 1.2 * width),
+            y: bandY + rand(-0.6, 0.6) * bandHeight,
+            size,
+            puffs,
+            drift: rand(0.6, 1.4),
+          });
+        }
+
+        layers.push({
+          clouds,
+          blur: params.blur + i * 10,
+          alpha: 0.55 - i * 0.08,
+          depth,
+          highlight: mixColor(baseColor, { r: 255, g: 255, b: 255 }, 0.55 - i * 0.05),
+          midtone: mixColor(baseColor, { r: 235, g: 240, b: 250 }, 0.25 - i * 0.04),
+          shadow: mixColor(baseColor, { r: 70, g: 90, b: 120 }, 0.4 + i * 0.06),
+        });
+      }
+    }
+
+    function drawLight(targetCtx, width, height) {
+      const lightStrength = params.light / 100;
+      if (lightStrength <= 0) {
+        return;
+      }
+      const linear = targetCtx.createLinearGradient(0, 0, 0, height);
+      linear.addColorStop(0, `rgba(210, 225, 245, ${0.26 * lightStrength})`);
+      linear.addColorStop(0.6, `rgba(140, 170, 210, ${0.16 * lightStrength})`);
+      linear.addColorStop(1, `rgba(60, 90, 130, ${0.2 * lightStrength})`);
+      targetCtx.fillStyle = linear;
+      targetCtx.fillRect(0, 0, width, height);
+
+      const sunX = width * 0.18;
+      const sunY = height * 0.2;
+      const sun = targetCtx.createRadialGradient(sunX, sunY, 0, sunX, sunY, width * 0.6);
+      sun.addColorStop(0, `rgba(255, 255, 255, ${0.3 * lightStrength})`);
+      sun.addColorStop(0.4, `rgba(210, 230, 255, ${0.18 * lightStrength})`);
+      sun.addColorStop(1, "rgba(210, 230, 255, 0)");
+      targetCtx.fillStyle = sun;
+      targetCtx.fillRect(0, 0, width, height);
+    }
+
+    function drawPuff(targetCtx, x, y, radius, layer) {
+      const lightDir = { x: -0.6, y: -0.8 };
+      const highlightX = x + lightDir.x * radius * 0.35;
+      const highlightY = y + lightDir.y * radius * 0.35;
+      const gradient = targetCtx.createRadialGradient(
+        highlightX,
+        highlightY,
+        radius * 0.1,
+        x,
+        y,
+        radius
+      );
+      gradient.addColorStop(0, colorToRgba(layer.highlight, 0.95));
+      gradient.addColorStop(0.45, colorToRgba(layer.midtone, 0.82));
+      gradient.addColorStop(1, colorToRgba(layer.shadow, 0.05));
+      targetCtx.fillStyle = gradient;
+      targetCtx.beginPath();
+      targetCtx.arc(x, y, radius, 0, Math.PI * 2);
+      targetCtx.fill();
+    }
+
+    function drawCloud(targetCtx, cloud, layer, time) {
+      const noiseScale = 0.0007 * layer.depth;
+      cloud.puffs.forEach((puff) => {
+        const xBase = cloud.x + puff.dx;
+        const yBase = cloud.y + puff.dy;
+        const n = valueNoise(xBase * noiseScale, yBase * noiseScale);
+        const wobble = Math.sin(time * cloud.drift + n * Math.PI * 2) * 10;
+        const x = xBase + n * 60 * layer.depth + wobble;
+        const y = yBase + n * 35 * layer.depth + wobble * 0.4;
+        const radius = puff.radius * (0.88 + n * 0.3);
+        drawPuff(targetCtx, x, y, radius, layer);
+      });
+    }
+
+    function renderScene(targetCtx, width, height) {
+      const t = 0.2;
+
+      targetCtx.clearRect(0, 0, width, height);
+      drawBackdrop(targetCtx, width, height);
+      drawLight(targetCtx, width, height);
+
+      layers.forEach((layer, layerIndex) => {
+        targetCtx.save();
+        targetCtx.globalAlpha = layer.alpha;
+        targetCtx.filter = `blur(${layer.blur}px)`;
+        targetCtx.globalCompositeOperation = layerIndex === 0 ? "screen" : "source-over";
+
+        layer.clouds.forEach((cloud) => {
+          drawCloud(targetCtx, cloud, layer, t);
+        });
+
+        targetCtx.restore();
+      });
+    }
+
+    function updateLabels() {
+      valueLabels.forEach((label) => {
+        const key = label.dataset.value;
+        if (key === "background" || key === "cloudColor") {
+          label.textContent = params[key].toUpperCase();
+          return;
+        }
+        if (key === "light") {
+          label.textContent = `${params[key]}%`;
+          return;
+        }
+        if (key === "exportWidth" || key === "exportHeight") {
+          label.textContent = params[key];
+          return;
+        }
+        label.textContent = params[key];
+      });
+    }
+
+    function applySettings({ reseed = false } = {}) {
+      if (reseed) {
+        noiseSeed = Math.random() * 1000;
+      }
+      params.background = inputs.background.value;
+      params.cloudColor = inputs.cloudColor.value;
+      params.exportWidth = Number(inputs.exportWidth.value);
+      params.exportHeight = Number(inputs.exportHeight.value);
+      params.density = Number(inputs.density.value);
+      params.layers = Number(inputs.layers.value);
+      params.size = Number(inputs.size.value);
+      params.blur = Number(inputs.blur.value);
+      params.light = Number(inputs.light.value);
+      updateLabels();
+      initLayers(canvas.width / dpr, canvas.height / dpr);
+      renderScene(ctx, canvas.width / dpr, canvas.height / dpr);
+    }
+
+    Object.values(inputs).forEach((input) => {
+      input.addEventListener("input", () => applySettings());
+    });
+
+    document.getElementById("randomize").addEventListener("click", () => {
+      applySettings({ reseed: true });
+    });
+
+    document.getElementById("download").addEventListener("click", () => {
+      const exportCanvas = document.createElement("canvas");
+      exportCanvas.width = Math.max(320, params.exportWidth);
+      exportCanvas.height = Math.max(320, params.exportHeight);
+      const exportCtx = exportCanvas.getContext("2d");
+
+      initLayers(exportCanvas.width, exportCanvas.height);
+      renderScene(exportCtx, exportCanvas.width, exportCanvas.height);
+
+      const link = document.createElement("a");
+      link.download = "clouds.png";
+      link.href = exportCanvas.toDataURL("image/png");
+      link.click();
+
+      initLayers(canvas.width / dpr, canvas.height / dpr);
+      renderScene(ctx, canvas.width / dpr, canvas.height / dpr);
+    });
+
+    window.addEventListener("resize", () => {
+      resize();
+      applySettings();
+    });
+
+    resize();
+    applySettings();
+  </script>
+</body>
+</html>
