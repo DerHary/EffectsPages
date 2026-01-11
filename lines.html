@@ -818,12 +818,9 @@
         if (!blob) {
           return;
         }
-        const downloadId =
-          typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
-            ? crypto.randomUUID()
-            : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        const rand = Math.floor(1000 + Math.random() * 9000);
         const link = document.createElement("a");
-        link.download = `lines-${downloadId}.png`;
+        link.download = `lines_${seed}_${rand}.png`;
         link.href = URL.createObjectURL(blob);
         link.click();
         URL.revokeObjectURL(link.href);

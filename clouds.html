@@ -492,7 +492,9 @@
       renderScene(exportCtx, exportCanvas.width, exportCanvas.height);
 
       const link = document.createElement("a");
-      link.download = "clouds.png";
+      const rand = Math.floor(1000 + Math.random() * 9000);
+      const seedLabel = Math.floor(noiseSeed);
+      link.download = `clouds_${seedLabel}_${rand}.png`;
       link.href = exportCanvas.toDataURL("image/png");
       link.click();
 
