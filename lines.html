@@ -34,9 +34,9 @@
 
     #lines {
       position: fixed;
-      inset: 0;
-      width: 100vw;
-      height: 100vh;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
       display: block;
     }
 
@@ -221,14 +221,12 @@
         <button id="randomize" type="button">New Seed</button>
         <button id="download" type="button">Download PNG</button>
       </div>
-      <div class="hint">Der Download nutzt die Export-Groesse.</div>
+      <div class="hint">Preview is following the export size</div>
     </div>
   </div>
 
   <script>
     const canvas = document.getElementById("lines");
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-
     const inputs = {
       backgroundTop: document.getElementById("backgroundTop"),
       backgroundBottom: document.getElementById("backgroundBottom"),
@@ -297,11 +295,14 @@
       };
     }
 
-    function resize() {
-      canvas.width = Math.floor(window.innerWidth * dpr);
-      canvas.height = Math.floor(window.innerHeight * dpr);
-      canvas.style.width = `${window.innerWidth}px`;
-      canvas.style.height = `${window.innerHeight}px`;
+    function updateCanvasLayout() {
+      const exportWidth = Math.max(320, params.exportWidth);
+      const exportHeight = Math.max(320, params.exportHeight);
+      const scale = Math.max(window.innerWidth / exportWidth, window.innerHeight / exportHeight);
+      canvas.width = exportWidth;
+      canvas.height = exportHeight;
+      canvas.style.width = `${Math.ceil(exportWidth * scale)}px`;
+      canvas.style.height = `${Math.ceil(exportHeight * scale)}px`;
       if (renderer) {
         renderer.gl.viewport(0, 0, canvas.width, canvas.height);
       }
@@ -783,11 +784,17 @@
         lastSeed = rngSeed;
       }
       syncParams();
+      updateCanvasLayout();
       renderScene(renderer, canvas.width, canvas.height, "preview");
     }
 
-    Object.values(inputs).forEach((input) => {
-      input.addEventListener("input", () => syncParams());
+    Object.entries(inputs).forEach(([key, input]) => {
+      input.addEventListener("input", () => {
+        syncParams();
+        if (key === "exportWidth" || key === "exportHeight") {
+          applySettings();
+        }
+      });
     });
 
     document.getElementById("randomize").addEventListener("click", () => {
@@ -799,8 +806,8 @@
       const seed = lastSeed;
       rngSeed = seed;
       const exportCanvas = document.createElement("canvas");
-      exportCanvas.width = Math.max(320, params.exportWidth);
-      exportCanvas.height = Math.max(320, params.exportHeight);
+      exportCanvas.width = canvas.width;
+      exportCanvas.height = canvas.height;
       const exportRenderer = createRenderer(exportCanvas);
       if (!exportRenderer) {
         return;
@@ -811,8 +818,12 @@
         if (!blob) {
           return;
         }
+        const downloadId =
+          typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+            ? crypto.randomUUID()
+            : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
         const link = document.createElement("a");
-        link.download = "lines.png";
+        link.download = `lines-${downloadId}.png`;
         link.href = URL.createObjectURL(blob);
         link.click();
         URL.revokeObjectURL(link.href);
@@ -820,7 +831,6 @@
     });
 
     window.addEventListener("resize", () => {
-      resize();
       applySettings();
     });
 
@@ -828,7 +838,6 @@
     if (!renderer) {
       console.error("WebGL2 not supported.");
     } else {
-      resize();
       applySettings();
     }
   </script>
